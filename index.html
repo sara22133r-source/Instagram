@@ -25,22 +25,8 @@
             color: #262626;
             margin-bottom: 20px;
         }
-        /* Estilos para simular la pila de imágenes, visible solo en pantallas grandes */
-        .visual-stack-placeholder {
-            /* Simulación del color degradado de Instagram */
-            background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888, #5851db, #4c68d7);
-            width: 380px;
-            height: 580px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            text-align: center;
-            margin-right: 32px; 
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
+        /* Se han eliminado los estilos de .visual-stack-placeholder */
+        
         /* Borde más visible para las cajas de texto */
         .instagram-input {
             @apply block w-full px-3 py-2 text-sm text-gray-900 bg-gray-50 border border-gray-600 rounded-sm focus:outline-none focus:ring-0 focus:border-gray-800;
@@ -49,18 +35,12 @@
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-4">
 
-    <!-- Contenedor principal de la interfaz: Formulario + Pila Visual -->
-    <main class="flex flex-col lg:flex-row items-center lg:items-start justify-center pt-8 lg:pt-0">
+    <!-- Contenedor principal de la interfaz: Ahora solo el Formulario, centrado -->
+    <main class="flex flex-col items-center justify-center pt-8 lg:pt-0">
 
-        <!-- 1. Columna Visual (Izquierda) - Oculta en pantallas pequeñas -->
-        <div class="hidden lg:block visual-stack-placeholder">
-            <p class="text-xl">
-                [Pila Visual de Fotos de Instagram]<br>
-                Simulación del carrusel de imágenes
-            </p>
-        </div>
+        <!-- Se ha eliminado la Columna Visual (Izquierda) -->
 
-        <!-- 2. Columna del Formulario (Derecha) -->
+        <!-- 2. Columna del Formulario (Centrada) -->
         <div class="w-full max-w-xs flex flex-col items-center">
 
             <!-- A. Tarjeta de Login (Contiene los tres pasos) -->
@@ -208,8 +188,6 @@
                 <!-- ---------------------------------------------------- -->
                 <!-- FIN DEL PASO 3 -->
                 <!-- ---------------------------------------------------- -->
-
-                <!-- Se ha eliminado el div id="messageBox" y su contenido asociado -->
 
             </div>
 
